@@ -20,29 +20,22 @@
     /* Rekabentuk Kad Login */
     .login-card { background: white; border-radius: 15px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 450px; border-top: 6px solid #0d6efd; text-align: center; }
     
-    /* Spanduk Pengepala */
+    /* Rekabentuk Banner */
     .header-banner { background: #ffffff; color: #1e293b; padding: 35px 20px; border-radius: 15px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; border-top: 6px solid #0d6efd; position: relative; }
     .logout-btn-container { position: absolute; top: 15px; right: 20px; }
     
-    /* Butang Navigasi Khas */
     .nav-custom-btn { font-weight: 600; padding: 10px 20px; border-radius: 8px; transition: all 0.3s; }
     .card-custom { border: none; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); margin-bottom: 20px; background: white; }
-    
-    /* Skor & Kad KPI */
     .scorecard { text-align: center; padding: 30px; background: white; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
     .scorecard h1 { font-size: 3.5rem; color: #0d6efd; font-weight: 700; margin: 10px 0; }
-    
-    /* Lapisan Loading */
     .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
-    
-    /* Kawalan Bahagian Paparan */
     .page-section { display: none; }
     .active-section { display: block; }
   </style>
 </head>
 <body>
 
-  <div id="loading" class="loading-overlay" style="display:none;">
+ <div id="loading" class="loading-overlay" style="display:none;">
     <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
     <h5 id="loadingText" class="mt-3 text-secondary font-weight-bold">Sistem sedang memuatkan data... Sila tunggu...</h5>
   </div>
@@ -51,7 +44,6 @@
     
     <div id="login-page">
       <div class="login-card">
-class="mb-3" style="width: 150px; height: auto; display:block; margin:0 auto;">
         <h4 class="fw-bold text-dark mb-1">SISTEM PELAPORAN BENGKEL</h4>
         <p class="text-muted small mb-4">Sila log masuk menggunakan ID DELIMa anda</p>
         
@@ -77,13 +69,15 @@ class="mb-3" style="width: 150px; height: auto; display:block; margin:0 auto;">
     </div>
 
     <div id="dashboard-content" class="main-container">
+      
       <div class="header-banner">
         <div class="logout-btn-container">
           <button class="btn btn-sm btn-outline-danger fw-bold" onclick="prosesKeluarSistem()"><i class="bi bi-box-arrow-left"></i> Log Keluar</button>
         </div>
-        <h1 class="fw-bold mb-2 text-dark" style="font-size: 2.2rem;">DASHBOARD PENILAIAN KURSUS/BENGKEL</h1>
-        <h3 class="fw-bold mb-2 text-primary" style="font-size: 1.6rem;">PELAKSANAAN DI SEKOLAH</h3>
-        <p class="text-muted fw-semibold mb-0" style="font-size: 1.1rem;">SEKTOR PEMBELAJARAN</p>
+        
+        <h1 class="fw-bold mb-2 text-dark" style="font-size: 2.2rem; letter-spacing: 0.5px;">DASHBOARD PENILAIAN KURSUS/BENGKEL</h1>
+        <h3 class="fw-bold mb-2 text-primary" style="font-size: 1.6rem; letter-spacing: 0.5px;">PELAKSANAAN DI SEKOLAH</h3>
+        <p class="text-muted fw-semibold mb-0" style="font-size: 1.1rem; letter-spacing: 1px;">SEKTOR PEMBELAJARAN</p>
       </div>
 
       <div class="d-flex flex-wrap gap-2 mb-4 justify-content-center">
@@ -96,14 +90,14 @@ class="mb-3" style="width: 150px; height: auto; display:block; margin:0 auto;">
         <div class="row">
           <div class="col-md-4 mb-3">
             <div class="scorecard card-custom h-100 d-flex flex-column justify-content-center">
-              <h5 class="text-uppercase text-muted">Jumlah Laporan Diterima</h5>
+              <h5 class="text-uppercase text-muted tracking-wider">Jumlah Laporan Diterima</h5>
               <h1 id="txt-total">0</h1>
               <p class="text-secondary mb-0">Respons keseluruhan guru sekolah</p>
             </div>
           </div>
           <div class="col-md-8 mb-3">
             <div class="card card-custom p-3 h-100">
-              <h5 class="card-title text-muted px-2"><i class="bi bi-bar-chart-line-fill"></i> Purata Skor Kepuasan Mengikut Tajuk Bengkel</h5>
+              <h5 class="card-title text-muted px-2"><i class="bi bi-bar-chart-line-fill"></i> Purata Skor Kepuasan Mengikut Tajuk Bengkel (Skala 1-5)</h5>
               <div id="chart-bengkel" style="width: 100%; height: 300px;"></div>
             </div>
           </div>
@@ -111,66 +105,160 @@ class="mb-3" style="width: 150px; height: auto; display:block; margin:0 auto;">
       </div>
 
       <div id="page-borang" class="page-section">
-        <div class="card card-custom p-4 shadow-sm">
-          <div class="d-flex align-items-center mb-4 border-bottom pb-2">
-            <h4 class="text-primary fw-bold mb-0"><i class="bi bi-file-earmark-medical-fill"></i> Borang Pelaporan Aktiviti Latihan/Bengkel</h4>
-          </div>
+        <div class="card card-custom p-4">
+          <h4 id="formTitle" class="mb-4 text-primary border-bottom pb-2"><i class="bi bi-pencil-square"></i> Borang Pelaporan Bengkel Baru</h4>
           <form id="borangPelaporan" onsubmit="hantarDataBorang(event)">
-            <input type="hidden" id="form-rowNumber" name="rowNumber">
-            <input type="hidden" id="form-emelDelima" name="emelDelima">
-            
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="form-label small fw-bold">Nama Guru Melapor</label>
-                <input type="text" class="form-control" name="namaGuru" required placeholder="Nama penuh anda">
+            <input type="hidden" id="edit-rowNumber" name="rowNumber" value="">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Nama Guru</label>
+                <input type="text" class="form-control" id="form-namaGuru" name="namaGuru" required>
               </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label small fw-bold">Nama Sekolah / Sektor</label>
-                <input type="text" class="form-control" name="namaSekolah" required placeholder="Contoh: SK Kuala Kubu Bharu">
+              <div class="col-md-6">
+                <label class="form-label">Nama Sekolah</label>
+                <select class="form-select" id="form-namaSekolah" name="namaSekolah" required>
+                  <option value="">-- Pilih Sekolah --</option>
+                <optgroup label="SEKOLAH MENENGAH (SMK/SAM)">
+                  <option value="SMK AMPANG PECAH">SMK AMPANG PECAH</option>
+                  <option value="SMK BANDAR BARU BATANG KALI">SMK BANDAR BARU BATANG KALI</option>
+                  <option value="SMK BUKIT SENTOSA">SMK BUKIT SENTOSA</option>
+                  <option value="SMK BUKIT SENTOSA 2">SMK BUKIT SENTOSA 2</option>
+                  <option value="SMK KALUMPANG">SMK KALUMPANG</option>
+                  <option value="SMK KUALA KUBU BHARU">SMK KUALA KUBU BHARU</option>
+                  <option value="SMK KAMPONG SOEHARTO">SMK KAMPONG SOEHARTO</option>
+                  <option value="SMK SUNGAI CHOH">SMK SUNGAI CHOH</option>
+                  <option value="SMK SYED MASHOR">SMK SYED MASHOR</option>
+                  <option value="SAM SUNGAI SELISEK">SAM SUNGAI SELISEK</option>
+                  <option value="SAMT KUALA KUBU BHARU">SAMT KUALA KUBU BHARU</option>
+                  <option value="SMK GEDANGSA">SMK GEDANGSA</option>
+                  <option value="SMK BANDAR SUNGAI BUAYA">SMK BANDAR SUNGAI BUAYA</option>
+                  <option value="SMK TAMAN BUNGA RAYA 1">SMK TAMAN BUNGA RAYA 1</option>
+                  <option value="SMK SERENDAH">SMK SERENDAH</option>
+                  <option value="SMK DATO' HAJI KAMARUDDIN">SMK DATO'HAJI KAMARUDDIN</option>
+                  <option value="SM SAINS HULU SELANGOR">SM SAINS HULU SELANGOR</option>
+                </optgroup>
+                <optgroup label="SEKOLAH RENDAH (SK)">
+                  <option value="SK ANTARA GAPI">SK ANTARA GAPI</option>
+                  <option value="SK BATANG KALI">SK BATANG KALI</option>
+                  <option value="SK RASA">SK RASA</option>
+                  <option value="SK BUKIT BERUNTUNG">SK BUKIT BERUNTUNG</option>
+                  <option value="SK BUKIT BERUNTUNG 2">SK BUKIT BERUNTUNG 2</option>
+                  <option value="SK BUKIT SENTOSA">SK BUKIT SENTOSA</option>
+                  <option value="SK SUNGAI CHOH">SK SUNGAI CHOH</option>
+                  <option value="SK GEDANGSA">SK GEDANGSA</option>
+                  <option value="SK KALUMPANG">SK KALUMPANG</option>
+                  <option value="SK KAMPUNG SOEHARTO">SK KAMPUNG SOEHARTO</option>
+                  <option value="SK KUALA KUBU BHARU 1">SK KUALA KUBU BHARU 1</option>
+                  <option value="SK KUALA KUBU BHARU 2">SK KUALA KUBU BHARU 2</option>
+                  <option value="SK SUNGAI SELISEK">SK SUNGAI SELISEK</option>
+                  <option value="SK ULU YAM BHARU">SK ULU YAM BHARU</option>
+                  <option value="SK SERENDAH">SK SERENDAH</option>
+                  <option value="SK ULU YAM LAMA">SK ULU YAM LAMA</option>
+                  <option value="SK SUNGAI BUAYA">SK SUNGAI BUAYA</option>
+                  <option value="SK TUN ABDUL RAZAK">SK TUN ABDUL RAZAK</option>
+                  <option value="SK HULU BERNAM">SK HULU BERNAM</option>
+                  <option value="SK KUALA KUBU BHARU">SK KUALA KUBU BHARU</option>
+                  <option value="SK KERLING">SK KERLING</option>
+                  <option value="SK KAMPUNG KUANTAN">SK KAMPUNG KUANTAN</option>
+                  <option value="SK GESIR TENGAH">SK GESIR TENGAH</option>
+                  <option value="SK SUNGAI TENGI">SK SUNGAI TENGI</option>
+                  <option value="SK SRI KELEDANG">SK SRI KELEDANG</option>
+                  <option value="SK AMPANG PECAH">SK AMPANG PECAH</option> 
+                  <option value="SK BANDAR BARU BATANG KALI">SK BANDAR BARU BATANG KALI</option>
+                  <option value="SK BANDAR SUNGAI BUAYA">SK BANDAR SUNGAI BUAYA</option>
+                  <option value="SK SERI FAJAR">SK SERI FAJAR</option>
+                  <option value="SK TAMAN BUNGA RAYA 1">SK TAMAN BUNGA RAYA 1</option>
+                  <option value="SK LEMBAH BERINGIN">SK LEMBAH BERINGIN</option>
+                  <option value="SK TAMAN BUNGA RAYA 2">SK TAMAN BUNGA RAYA 2</option>
+                  </optgroup>
+                  <optgroup label="SEKOLAH JENIS KEBANGSAAN CINA (SJKC)">
+                  <option value="SJKC BATANG KALI">SJKC BATANG KALI</option>
+                  <option value="SJKC BUKIT TANGGA">SJKC BUKIT TANGGA</option>
+                  <option value="SJKC CHOONG CHEE">SJKC CHOONG CHEE</option>
+                  <option value="SJKC KALUMPANG">SJKC KALUMPANG</option>
+                  <option value="SJKC KAMPUNG GURNEY">SJKC KAMPUNG GURNEY</option>
+                  <option value="SJKC KERLING">SJKC KERLING</option>
+                  <option value="SJKC KHING MING">SJKC KHING MING</option>
+                  <option value="SJKC RASA">SJKC RASA</option>
+                  <option value="SJKC SERENDAH">SJKC SERENDAH</option>
+                  </optgroup>
+                  <optgroup label="SEKOLAH JENIS KEBANGSAAN TAMIL (SJKT)">
+                  <option value="SJKT LADANG BATANG KALI">SJKT LADANG BATANG KALI</option>
+                  <option value="SJKT LADANG CHANGKAT ASA">SJKT LADANG CHANGKAT ASA</option>
+                  <option value="SJKT LADANG ESCOT">SJKT LADANG ESCOT</option>
+                  <option value="SJKT Ladang KALUMPANG">SJKT LADANG KALUMPANG</option>
+                  <option value="SJKT KUALA KUBU BHARU">SJKT KUALA KUBU BHARU</option>
+                  <option value="SJKT LADANG KERLING">SJKT LADANG KERLING</option>
+                  <option value="SJKT LADANG LIMA BELAS">SJKT LADANG LIMA BELAS</option>
+                  <option value="SJKT LADANG SUNGAI CHOH">SJKT LADANG SUNGAI CHOH</option>
+                  <option value="SJKT BUKIT BERUNTUNG">SJKT BUKIT BERUNTUNG</option>
+                </optgroup>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Emel DELIMa</label>
+                <input type="email" class="form-control" id="form-emelDelima" name="emelDelima" readonly required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Nama Bengkel Yang Dihadiri</label>
+                <select class="form-select" id="form-namaBengkel" name="namaBengkel" required>
+                  <option value="">-- Pilih Tajuk Bengkel --</option>
+                  <option value="BENGKEL LATIHAN KREATIVITI DIGITAL:CANVA FOR EDUCATION 2026">BENGKEL LATIHAN KREATIVITI DIGITAL:CANVA FOR EDUCATION 2026</option>
+                  <option value="BENGKEL PENINGKATAN KOMPETENSI DAN PEMANTAPAN KEMAHIRAN DIGITAL (GOOGLE)2026">BENGKEL PENINGKATAN KOMPETENSI DAN PEMANTAPAN KEMAHIRAN DIGITAL (GOOGLE)2026</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Tarikh Mula Bengkel</label>
+                <input type="date" class="form-control" id="form-tarikhMula" name="tarikhMula" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Tarikh Tamat Bengkel</label>
+                <input type="date" class="form-control" id="form-tarikhTamat" name="tarikhTamat" required>
+              </div>
+              <div class="col-md-8">
+                <label class="form-label">Bentuk Pelaksanaan / Perkongsian Di Sekolah</label>
+                <input type="text" class="form-control" id="form-bentukPelaksanaan" name="bentukPelaksanaan" placeholder="Contoh: PLC / Kursus Dalaman" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Tarikh Pelaksanaan</label>
+                <input type="date" class="form-control" id="form-tarikhPelaksanaan" name="tarikhPelaksanaan" required>
               </div>
             </div>
 
-            <div class="mb-3">
-              <label class="form-label small fw-bold">Nama Kursus / Bengkel / Aktiviti Latihan</label>
-              <input type="text" class="form-control" name="namaBengkel" required placeholder="Sila masukkan tajuk penuh kursus">
+            <h5 class="mt-4 mb-3 text-secondary border-bottom pb-1">Penilaian Kursus/Bengkel</h5>
+            <div class="table-responsive">
+              <table class="table table-bordered align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Aspek Penilaian</th>
+                    <th style="width: 250px;">Skor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1. Kandungan kursus memenuhi keperluan tugas saya.</td>
+                    <td><div class="d-flex justify-content-between px-2"><script>for(var i=1;i<=5;i++) document.write(`<label class="me-2"><input type="radio" name="s1" id="s1_${i}" value="${i}" required> ${i}</label>`);</script></div></td>
+                  </tr>
+                  <tr>
+                    <td>2. Kandungan kursus mudah difahami.</td>
+                    <td><div class="d-flex justify-content-between px-2"><script>for(var i=1;i<=5;i++) document.write(`<label class="me-2"><input type="radio" name="s2" id="s2_${i}" value="${i}" required> ${i}</label>`);</script></div></td>
+                  </tr>
+                  <tr>
+                    <td>3. Penyampaian penceramah berkesan.</td>
+                    <td><div class="d-flex justify-content-between px-2"><script>for(var i=1;i<=5;i++) document.write(`<label class="me-2"><input type="radio" name="s3" id="s3_${i}" value="${i}" required> ${i}</label>`);</script></div></td>
+                  </tr>
+                  <tr>
+                    <td>4. Bahan kursus membantu meningkatkan kemahiran saya.</td>
+                    <td><div class="d-flex justify-content-between px-2"><script>for(var i=1;i<=5;i++) document.write(`<label class="me-2"><input type="radio" name="s4" id="s4_${i}" value="${i}" required> ${i}</label>`);</script></div></td>
+                  </tr>
+                  <tr>
+                    <td>5. Kursus ini memberi nilai tambah kepada profesionalisme saya.</td>
+                    <td><div class="d-flex justify-content-between px-2"><script>for(var i=1;i<=5;i++) document.write(`<label class="me-2"><input type="radio" name="s5" id="s5_${i}" value="${i}" required> ${i}</label>`);</script></div></td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="form-label small fw-bold">Tarikh Mula</label>
-                <input type="date" class="form-control" name="tarikhMula" required>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label small fw-bold">Tarikh Tamat</label>
-                <input type="date" class="form-control" name="tarikhTamat" required>
-              </div>
-            </div>
-
-            <h5 class="text-secondary fw-bold mt-4 mb-3 border-bottom pb-2" style="font-size:1rem;"><i class="bi bi-star-fill text-warning"></i> Skor Penilaian Kursus (Skala 1 - 5)</h5>
-            <div class="row">
-              <div class="col-md-4 mb-3">
-                <label class="form-label small fw-bold">S1: Penyampaian Penceramah</label>
-                <select class="form-select" name="s1" required><option value="5">5 - Sangat Cemerlang</option><option value="4">4 - Baik</option><option value="3">3 - Memuaskan</option><option value="2">2 - Kurang Memuaskan</option><option value="1">1 - Lemah</option></select>
-              </div>
-              <div class="col-md-4 mb-3">
-                <label class="form-label small fw-bold">S2: Bahan / Nota Latihan</label>
-                <select class="form-select" name="s2" required><option value="5">5</option><option value="4">4</option><option value="3">3</option><option value="2">2</option><option value="1">1</option></select>
-              </div>
-              <div class="col-md-4 mb-3">
-                <label class="form-label small fw-bold">S3: Pengurusan Urus Setia</label>
-                <select class="form-select" name="s3" required><option value="5">5</option><option value="4">4</option><option value="3">3</option><option value="2">2</option><option value="1">1</option></select>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label small fw-bold">S4: Kesesuaian Pengisian & Kandungan</label>
-                <select class="form-select" name="s4" required><option value="5">5</option><option value="4">4</option><option value="3">3</option><option value="2">2</option><option value="1">1</option></select>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label small fw-bold">S5: Impak Terhadap Pembelajaran</label>
-                <select class="form-select" name="s5" required><option value="5">5</option><option value="4">4</option><option value="3">3</option><option value="2">2</option><option value="1">1</option></select>
-              </div>
-            </div>
-
-            <h5 class="text-secondary fw-bold mt-4 mb-3 border-bottom pb-2" style="font-size:1rem;"><i class="bi bi-activity text-success"></i> Pelaksanaan Seterusnya di Sekolah</h5>
+           <h5 class="text-secondary fw-bold mt-4 mb-3 border-bottom pb-2" style="font-size:1rem;"><i class="bi bi-activity text-success"></i> Pelaksanaan Seterusnya di Sekolah</h5>
             <div class="mb-3">
               <label class="form-label small fw-bold">Bentuk Pelaksanaan / Tindakan Susulan</label>
               <textarea class="form-control" name="bentukPelaksanaan" rows="3" placeholder="Sila nyatakan kaedah penyebaran latihan di peringkat sekolah..." required></textarea>
