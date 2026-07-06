@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Penilaian Kursus/Bengkel</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  
+  <style>
+    body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .main-container { width: 100%; max-width: 1240px; margin: 0 auto; padding: 0 15px; }
+    
+    /* Sekatan Paparan Utama Sebelum Login */
+    #dashboard-content { display: none; }
+    #login-page { display: flex; justify-content: center; align-items: center; min-height: 85vh; }
+    
+    /* Rekabentuk Kad Login */
+    .login-card { background: white; border-radius: 15px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 450px; border-top: 6px solid #0d6efd; text-align: center; }
+    
+    /* Rekabentuk Banner */
+    .header-banner { background: #ffffff; color: #1e293b; padding: 35px 20px; border-radius: 15px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; border-top: 6px solid #0d6efd; position: relative; }
+    .logout-btn-container { position: absolute; top: 15px; right: 20px; }
+    
+    .nav-custom-btn { font-weight: 600; padding: 10px 20px; border-radius: 8px; transition: all 0.3s; }
+    .card-custom { border: none; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); margin-bottom: 20px; background: white; }
+    .scorecard { text-align: center; padding: 30px; background: white; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+    .scorecard h1 { font-size: 3.5rem; color: #0d6efd; font-weight: 700; margin: 10px 0; }
+    .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+    .page-section { display: none; }
+    .active-section { display: block; }
+  </style>
+</head>
+<body>
+
+  <div id="loading" class="loading-overlay" style="display:none;">
+    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+    <h5 id="loadingText" class="mt-3 text-secondary font-weight-bold">Sistem sedang memuatkan data... Sila tunggu...</h5>
+  </div>
+
+  <div class="container pb-5">
+    
+    <div id="login-page">
+      <div class="login-card">
+        <h4 class="fw-bold text-dark mb-1">SISTEM PELAPORAN BENGKEL</h4>
+        <p class="text-muted small mb-4">Sila log masuk menggunakan ID DELIMa anda</p>
+        
+        <form id="formLoginSistem" onsubmit="prosesMasukSistem(event)">
+          <div class="mb-3 text-start">
+            <label class="form-label small fw-bold text-secondary">ID DELIMa / Emel Admin</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="bi bi-envelope-fill text-muted"></i></span>
+              <input type="email" id="login-email" class="form-control" placeholder="contoh: g-12345678@moe-dl.edu.my" required>
+            </div>
+          </div>
+          <div class="mb-4 text-start">
+            <label class="form-label small fw-bold text-secondary">Kata Laluan (Password)</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="bi bi-lock-fill text-muted"></i></span>
+              <input type="password" id="login-password" class="form-control" placeholder="Masukkan password" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary w-100 fw-bold py-2"><i class="bi bi-box-arrow-in-right"></i> Log Masuk Sistem</button>
+        </form>
+        <div id="login-alert" class="alert alert-danger mt-3 small p-2" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div id="dashboard-content" class="main-container">
+      
+      <div class="header-banner">
+        <div class="logout-btn-container">
+          <button class="btn btn-sm btn-outline-danger fw-bold" onclick="prosesKeluarSistem()"><i class="bi bi-box-arrow-left"></i> Log Keluar</button>
+        </div>
+        
+        <h1 class="fw-bold mb-2 text-dark" style="font-size: 2.2rem; letter-spacing: 0.5px;">DASHBOARD PENILAIAN KURSUS/BENGKEL</h1>
+        <h3 class="fw-bold mb-2 text-primary" style="font-size: 1.6rem; letter-spacing: 0.5px;">PELAKSANAAN DI SEKOLAH</h3>
+        <p class="text-muted fw-semibold mb-0" style="font-size: 1.1rem; letter-spacing: 1px;">SEKTOR PEMBELAJARAN</p>
+      </div>
+
+      <div class="d-flex flex-wrap gap-2 mb-4 justify-content-center">
+        <button id="btn-utama" class="btn btn-primary nav-custom-btn" onclick="tukarHalaman('page-utama')"><i class="bi bi-grid-1x2-fill"></i> Paparan Utama</button>
+        <button id="btn-borang" class="btn btn-outline-primary nav-custom-btn" onclick="tukarHalaman('page-borang')"><i class="bi bi-file-earmark-text-fill"></i> Borang Pelaporan</button>
+        <button id="btn-senarai" class="btn btn-outline-primary nav-custom-btn" onclick="tukarHalaman('page-senarai')"><i class="bi bi-table"></i> Senarai Laporan Guru</button>
+      </div>
+
+      <div id="page-utama" class="page-section active-section">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <div class="scorecard card-custom h-100 d-flex flex-column justify-content-center">
+              <h5 class="text-uppercase text-muted tracking-wider">Jumlah Laporan Diterima</h5>
+              <h1 id="txt-total">0</h1>
+              <p class="text-secondary mb-0">Respons keseluruhan guru sekolah</p>
+            </div>
+          </div>
+          <div class="col-md-8 mb-3">
+            <div class="card card-custom p-3 h-100">
+              <h5 class="card-title text-muted px-2"><i class="bi bi-bar-chart-line-fill"></i> Purata Skor Kepuasan Mengikut Tajuk Bengkel (Skala 1-5)</h5>
+              <div id="chart-bengkel" style="width: 100%; height: 300px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="page-borang" class="page-section">
+        <div class="card card-custom p-4">
+          <h4 id="formTitle" class="mb-4 text-primary border-bottom pb-2"><i class="bi bi-pencil-square"></i> Borang Pelaporan Bengkel Baru</h4>
+          <form id="borangPelaporan" onsubmit="hantarDataBorang(event)">
+            <input type="hidden" id="edit-rowNumber" name="rowNumber" value="">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Nama Guru</label>
+                <input type="text" class="form-control" id="form-namaGuru" name="namaGuru" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Nama Sekolah</label>
+                <select class="form-select" id="form-namaSekolah" name="namaSekolah" required>
+                  <option value="">-- Pilih Sekolah --</option>
+                <optgroup label="SEKOLAH MENENGAH (SMK/SAM)">
+                  <option value="SMK AMPANG PECAH">SMK AMPANG PECAH</option>
+                  <option value="SMK BANDAR BARU BATANG KALI">SMK BANDAR BARU BATANG KALI</option>
+                  <option value="SMK BUKIT SENTOSA">SMK BUKIT SENTOSA</option>
+                  <option value="SMK BUKIT SENTOSA 2">SMK BUKIT SENTOSA 2</option>
+                  <option value="SMK KALUMPANG">SMK KALUMPANG</option>
+                  <option value="SMK KUALA KUBU BHARU">SMK KUALA KUBU BHARU</option>
+                  <option value="SMK KAMPONG SOEHARTO">SMK KAMPONG SOEHARTO</option>
+                  <option value="SMK SUNGAI CHOH">SMK SUNGAI CHOH</option>
+                  <option value="SMK SYED MASHOR">SMK SYED MASHOR</option>
+                  <option value="SAM SUNGAI SELISEK">SAM SUNGAI SELISEK</option>
+                  <option value="SAMT KUALA KUBU BHARU">SAMT KUALA KUBU BHARU</option>
+                  <option value="SMK GEDANGSA">SMK GEDANGSA</option>
+                  <option value="SMK BANDAR SUNGAI BUAYA">SMK BANDAR SUNGAI BUAYA</option>
+                  <option value="SMK TAMAN BUNGA RAYA 1">SMK TAMAN BUNGA RAYA 1</option>
+                  <option value="SMK SERENDAH">SMK SERENDAH</option>
+                  <option value="SMK DATO' HAJI KAMARUDDIN">SMK DATO'HAJI KAMARUDDIN</option>
+                  <option value="SM SAINS HULU SELANGOR">SM SAINS HULU SELANGOR</option>
+                </optgroup>
+                <optgroup label="SEKOLAH RENDAH (SK)">
+                  <option value="SK ANTARA GAPI">SK ANTARA GAPI</option>
+                  <option value="SK BATANG KALI">SK BATANG KALI</option>
+                  <option value="SK RASA">SK RASA</option>
+                  <option value="SK BUKIT BERUNTUNG">SK BUKIT BERUNTUNG</option>
+                  <option value="SK BUKIT BERUNTUNG 2">SK BUKIT BERUNTUNG 2</option>
+                  <option value="SK BUKIT SENTOSA">SK BUKIT SENTOSA</option>
+                  <option value="SK SUNGAI CHOH">SK SUNGAI CHOH</option>
+                  <option value="SK GEDANGSA">SK GEDANGSA</option>
+                  <option value="SK KALUMPANG">SK KALUMPANG</option>
+                  <option value="SK KAMPUNG SOEHARTO">SK KAMPUNG SOEHARTO</option>
+                  <option value="SK KUALA KUBU BHARU 1">SK KUALA KUBU BHARU 1</option>
+                  <option value="SK KUALA KUBU BHARU 2">SK KUALA KUBU BHARU 2</option>
+                  <option value="SK SUNGAI SELISEK">SK SUNGAI SELISEK</option>
+                  <option value="SK ULU YAM BHARU">SK ULU YAM BHARU</option>
+                  <option value="SK SERENDAH">SK SERENDAH</option>
+                  <option value="SK ULU YAM LAMA">SK ULU YAM LAMA</option>
+                  <option value="SK SUNGAI BUAYA">SK SUNGAI BUAYA</option>
+                  <option value="SK TUN ABDUL RAZAK">SK TUN ABDUL RAZAK</option>
+                  <option value="SK HULU BERNAM">SK HULU BERNAM</option>
+                  <option value="SK KUALA KUBU BHARU">SK KUALA KUBU BHARU</option>
+                  <option value="SK KERLING">SK KERLING</option>
+                  <option value="SK KAMPUNG KUANTAN">SK KAMPUNG KUANTAN</option>
+                  <option value="SK GESIR TENGAH">SK GESIR TENGAH</option>
+                  <option value="SK SUNGAI TENGI">SK SUNGAI TENGI</option>
+                  <option value="SK SRI KELEDANG">SK SRI KELEDANG</option>
+                  <option value="SK AMPANG PECAH">SK AMPANG PECAH</option> 
+                  <option value="SK BANDAR BARU BATANG KALI">SK BANDAR BARU BATANG KALI</option>
+                  <option value="SK BANDAR SUNGAI BUAYA">SK BANDAR SUNGAI BUAYA</option>
+                  <option value="SK SERI FAJAR">SK SERI FAJAR</option>
+                  <option value="SK TAMAN BUNGA RAYA 1">SK TAMAN BUNGA RAYA 1</option>
+                  <option value="SK LEMBAH BERINGIN">SK LEMBAH BERINGIN</option>
+                  <option value="SK TAMAN BUNGA RAYA 2">SK TAMAN BUNGA RAYA 2</option>
+                  </optgroup>
+                  <optgroup label="SEKOLAH JENIS KEBANGSAAN CINA (SJKC)">
+                  <option value="SJKC BATANG KALI">SJKC BATANG KALI</option>
+                  <option value="SJKC BUKIT TANGGA">SJKC BUKIT TANGGA</option>
+                  <option value="SJKC CHOONG CHEE">SJKC CHOONG CHEE</option>
+                  <option value="SJKC KALUMPANG">SJKC KALUMPANG</option>
+                  <option value="SJKC KAMPUNG GURNEY">SJKC KAMPUNG GURNEY</option>
+                  <option value="SJKC KERLING">SJKC KERLING</option>
+                  <option value="SJKC KHING MING">SJKC KHING MING</option>
+                  <option value="SJKC RASA">SJKC RASA</option>
+                  <option value="SJKC SERENDAH">SJKC SERENDAH</option>
+                  </optgroup>
+                  <optgroup label="SEKOLAH JENIS KEBANGSAAN TAMIL (SJKT)">
+                  <option value="SJKT LADANG BATANG KALI">SJKT LADANG BATANG KALI</option>
+                  <option value="SJKT LADANG CHANGKAT ASA">SJKT LADANG CHANGKAT ASA</option>
+                  <option value="SJKT LADANG ESCOT">SJKT LADANG ESCOT</option>
+                  <option value="SJKT Ladang KALUMPANG">SJKT LADANG KALUMPANG</option>
+                  <option value="SJKT KUALA KUBU BHARU">SJKT KUALA KUBU BHARU</option>
+                  <option value="SJKT LADANG KERLING">SJKT LADANG KERLING</option>
+                  <option value="SJKT LADANG LIMA BELAS">SJKT LADANG LIMA BELAS</option>
+                  <option value="SJKT LADANG SUNGAI CHOH">SJKT LADANG SUNGAI CHOH</option>
+                  <option value="SJKT BUKIT BERUNTUNG">SJKT BUKIT BERUNTUNG</option>
+                </optgroup>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Emel DELIMa</label>
+                <input type="email" class="form-control" id="form-emelDelima" name="emelDelima" readonly required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Nama Bengkel Yang Dihadiri</label>
+                <select class="form-select" id="form-namaBengkel" name="namaBengkel" required>
+                  <option value="">-- Pilih Tajuk Bengkel --</option>
+                  <option value="BENGKEL LATIHAN KREATIVITI DIGITAL:CANVA FOR EDUCATION 2026">BENGKEL LATIHAN KREATIVITI DIGITAL:CANVA FOR EDUCATION 2026</option>
+                  <option value="BENGKEL PENINGKATAN KOMPETENSI DAN PEMANTAPAN KEMAHIRAN DIGITAL (GOOGLE)2026">BENGKEL PENINGKATAN KOMPETENSI DAN PEMANTAPAN KEMAHIRAN DIGITAL (GOOGLE)2026</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Tarikh Mula Bengkel</label>
+                <input type="date" class="form-control" id="form-tarikhMula" name="tarikhMula" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Tarikh Tamat Bengkel</label>
+                <input type="date" class="form-control" id="form-tarikhTamat" name="tarikhTamat" required>
+              </div>
+              <div class="col-md-8">
+                <label class="form-label">Bentuk Pelaksanaan / Perkongsian Di Sekolah</label>
+                <input type="text" class="form-control" id="form-bentukPelaksanaan" name="bentukPelaksanaan" placeholder="Contoh: PLC / Kursus Dalaman" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Tarikh Pelaksanaan</label>
+                <input type="date" class="form-control" id="form-tarikhPelaksanaan" name="tarikhPelaksanaan" required>
+              </div>
+            </div>
+
+            <h5 class="mt-4 mb-3 text-secondary border-bottom pb-1">Penilaian Kursus/Bengkel</h5>
+            <div class="table-responsive">
+              <table class="table table-bordered align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Aspek Penilaian</th>
+                    <th style="width: 250px;">Skor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1. Kandungan kursus memenuhi keperluan tugas saya.</td>
+                    <td><div class="d-flex justify-content-between px-2"><script>for(var i=1;i<=5;i++) document.write(`<label class="me-2"><input type="radio" name="s1" id="s1_${i}" value="${i}" required> ${i}</label>`);</script></div></td>
+                  </tr>
+                  <tr>
+                    <td>2. Kandungan kursus mudah difahami.</td>
+                    <td><div class="d-flex justify-content-between px-2"><script>for(var i=1;i<=5;i++) document.write(`<label class="me-2"><input type="radio" name="s2" id="s2_${i}" value="${i}" required> ${i}</label>`);</script></div></td>
+                  </tr>
+                  <tr>
+                    <td>3. Penyampaian penceramah berkesan.</td>
+                    <td><div class="d-flex justify-content-between px-2"><script>for(var i=1;i<=5;i++) document.write(`<label class="me-2"><input type="radio" name="s3" id="s3_${i}" value="${i}" required> ${i}</label>`);</script></div></td>
+                  </tr>
+                  <tr>
+                    <td>4. Bahan kursus membantu meningkatkan kemahiran saya.</td>
+                    <td><div class="d-flex justify-content-between px-2"><script>for(var i=1;i<=5;i++) document.write(`<label class="me-2"><input type="radio" name="s4" id="s4_${i}" value="${i}" required> ${i}</label>`);</script></div></td>
+                  </tr>
+                  <tr>
+                    <td>5. Kursus ini memberi nilai tambah kepada profesionalisme saya.</td>
+                    <td><div class="d-flex justify-content-between px-2"><script>for(var i=1;i<=5;i++) document.write(`<label class="me-2"><input type="radio" name="s5" id="s5_${i}" value="${i}" required> ${i}</label>`);</script></div></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div id="bahagian-gambar">
+              <h5 class="mt-4 mb-3 text-secondary border-bottom pb-1">Muat Naik Bukti Pelaksanaan (Maksimum 4 Gambar)</h5>
+              <div class="row g-2">
+                <div class="col-sm-6 col-md-3"><label class="small text-muted">Gambar 1</label><input type="file" id="g1" class="form-control form-control-sm" accept="image/*"></div>
+                <div class="col-sm-6 col-md-3"><label class="small text-muted">Gambar 2</label><input type="file" id="g2" class="form-control form-control-sm" accept="image/*"></div>
+                <div class="col-sm-6 col-md-3"><label class="small text-muted">Gambar 3</label><input type="file" id="g3" class="form-control form-control-sm" accept="image/*"></div>
+                <div class="col-sm-6 col-md-3"><label class="small text-muted">Gambar 4</label><input type="file" id="g4" class="form-control form-control-sm" accept="image/*"></div>
+              </div>
+            </div>
+
+            <div class="mt-4 text-end">
+              <button type="button" class="btn btn-secondary me-2" onclick="resetBorang()">Kosongkan</button>
+              <button type="submit" id="btn-submit-borang" class="btn btn-success px-4">Simpan Rekod & Laporan</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div id="page-senarai" class="page-section">
+        <div class="card card-custom p-4">
+          <div class="d-md-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+            <h4 class="text-primary mb-2 mb-md-0"><i class="bi bi-journal-check"></i> Senarai Dokumentasi Laporan Guru</h4>
+            <div class="d-flex align-items-center gap-2" style="min-width: 280px;">
+              <label class="small fw-bold text-muted text-nowrap"><i class="bi bi-filter"></i> Tapis Bengkel:</label>
+              <select id="filter-bengkel" class="form-select form-select-sm" onchange="tapisJadualBengkel()">
+                <option value="SEMUA">-- Semua Tajuk Bengkel --</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+              <thead class="table-dark">
+                <tr>
+                  <th style="width: 50px;">Bil</th>
+                  <th>Nama Guru</th>
+                  <th>Sekolah</th>
+                  <th>Nama Bengkel</th>
+                  <th>Bentuk Pelaksanaan</th>
+                  <th style="width: 220px; text-align: center;">Tindakan / Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="tabel-badan"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    google.charts.load('current', {'packages':['corechart']});
+    var cacheDataDashboard = null;
+    var userSession = { email: "", role: "" };
+
+    // FUNGSI PROSES SEMAK LOGIN
+    function prosesMasukSistem(e) {
+      e.preventDefault();
+      var emailVal = document.getElementById('login-email').value;
+      var passVal = document.getElementById('login-password').value;
+      var alertBox = document.getElementById('login-alert');
+      
+      alertBox.style.display = 'none';
+      document.getElementById('loading').style.display = 'flex';
+      document.getElementById('loadingText').innerText = "Mengesahkan identiti DELIMa...";
+
+      google.script.run.withSuccessHandler(function(res) {
+        document.getElementById('loading').style.display = 'none';
+        if (res.status === "SUCCESS") {
+          userSession.email = emailVal.trim().toLowerCase();
+          userSession.role = res.role;
+          
+          // Paparkan kandungan sistem & sembunyikan skrin login
+          document.getElementById('login-page').style.display = 'none';
+          document.getElementById('dashboard-content').style.display = 'block';
+          
+          // Isikan secara automatik ruangan emel pada borang dan jadikan read-only
+          document.getElementById('form-emelDelima').value = userSession.email;
+          
+          // Muat data pangkalan data
+          muatDataDashboard();
+        } else {
+          alertBox.innerText = res.msg;
+          alertBox.style.display = 'block';
+        }
+      }).semakLogin(emailVal, passVal);
+    }
+
+    // FUNGSI LOG OUT
+    function prosesKeluarSistem() {
+      if(confirm("Adakah anda pasti mahu log keluar daripada dashboard?")) {
+        userSession = { email: "", role: "" };
+        document.getElementById('formLoginSistem').reset();
+        document.getElementById('login-alert').style.display = 'none';
+        document.getElementById('dashboard-content').style.display = 'none';
+        document.getElementById('login-page').style.display = 'flex';
+      }
+    }
+
+    function tukarHalaman(idHalaman) {
+      document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active-section'));
+      document.getElementById(idHalaman).classList.add('active-section');
+      
+      document.querySelectorAll('.nav-custom-btn').forEach(btn => {
+        btn.classList.remove('btn-primary');
+        btn.classList.add('btn-outline-primary');
+      });
+      
+      var targetBtn = "btn-utama";
+      if(idHalaman === 'page-borang') targetBtn = "btn-borang";
+      if(idHalaman === 'page-senarai') targetBtn = "btn-senarai";
+      
+      document.getElementById(targetBtn).classList.remove('btn-outline-primary');
+      document.getElementById(targetBtn).classList.add('btn-primary');
+
+      if (idHalaman === 'page-utama' && cacheDataDashboard) {
+        binaGraf(cacheDataDashboard.dataGrafBengkel);
+      }
+    }
+
+    function muatDataDashboard() {
+      document.getElementById('loading').style.display = 'flex';
+      document.getElementById('loadingText').innerText = "Sistem sedang memuatkan data... Sila tunggu...";
+      google.script.run.withSuccessHandler(function(res) {
+        document.getElementById('loading').style.display = 'none';
+        if (res) {
+          cacheDataDashboard = res;
+          document.getElementById('txt-total').innerText = res.total;
+          isiPilihanDropdownFilter(res.dataGrafBengkel);
+          binaJadual(res.senarai);
+          binaGraf(res.dataGrafBengkel);
+        }
+      }).ambilDataDashboard();
+    }
+
+    function isiPilihanDropdownFilter(dataGraf) {
+      var dropdown = document.getElementById('filter-bengkel');
+      dropdown.innerHTML = '<option value="SEMUA">-- Semua Tajuk Bengkel --</option>';
+      if(dataGraf && dataGraf.length > 0) {
+        dataGraf.forEach(function(bengkel) {
+          var namaBengkel = bengkel[0];
+          var opt = document.createElement('option');
+          opt.value = namaBengkel;
+          opt.innerText = namaBengkel;
+          dropdown.appendChild(opt);
+        });
+      }
+    }
+
+    function tapisJadualBengkel() {
+      if (!cacheDataDashboard) return;
+      var nilaiTapis = document.getElementById('filter-bengkel').value;
+      if (nilaiTapis === "SEMUA") {
+        binaJadual(cacheDataDashboard.senarai);
+      } else {
+        var dataDitapis = cacheDataDashboard.senarai.filter(item => item.namaBengkel === nilaiTapis);
+        binaJadual(dataDitapis);
+      }
+    }
+
+    function binaGraf(dataGraf) {
+      if(!dataGraf || dataGraf.length === 0) {
+        document.getElementById('chart-bengkel').innerHTML = "<p class='text-center text-muted my-5'>Tiada data untuk dipaparkan pada graf.</p>";
+        return;
+      }
+      var dataTable = new google.visualization.DataTable();
+      dataTable.addColumn('string', 'Nama Bengkel');
+      dataTable.addColumn('number', 'Purata Skor Kepuasan');
+      dataTable.addRows(dataGraf);
+
+      var options = {
+        hAxis: { title: 'Tajuk Kursus / Bengkel', titleTextStyle: { color: '#666' } },
+        vAxis: { minValue: 0, maxValue: 5, gridlines: { count: 6 } },
+        colors: ['#0d6efd'],
+        legend: { position: 'none' },
+        chartArea: { width: '80%', height: '70%' },
+        bar: { groupWidth: '55%' }
+      };
+      var chart = new google.visualization.ColumnChart(document.getElementById('chart-bengkel'));
+      chart.draw(dataTable, options);
+    }
+
+    function binaJadual(senarai) {
+      var tbody = document.getElementById('tabel-badan');
+      tbody.innerHTML = "";
+      if(!senarai || senarai.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='6' class='text-center text-muted py-3'>Tiada rekod laporan ditemui.</td></tr>";
+        return;
+      }
+      
+      senarai.forEach(function(item, index) {
+        var tr = document.createElement('tr');
+        
+        // Peraturan Sekatan: Hanya Admin atau Guru pemilik rekod sahaja boleh Edit
+        var butangEditHTML = "";
+        if (userSession.role === "ADMIN" || userSession.email === item.emelDelima.toLowerCase()) {
+          butangEditHTML = `<button class="btn btn-sm btn-warning mx-1" onclick="aksiEdit(${item.rowNumber})"><i class="bi bi-pencil-square"></i> Edit</button>`;
+        }
+        
+        // Peraturan Sekatan: Hanya ADMIN sahaja yang dibenarkan memadam data dari pangkalan data
+        var butangPadamHTML = "";
+        if (userSession.role === "ADMIN") {
+          butangPadamHTML = `<button class="btn btn-sm btn-dark" onclick="aksiPadam(${item.rowNumber})"><i class="bi bi-trash"></i></button>`;
+        }
+
+        tr.innerHTML = `
+          <td>${index + 1}</td>
+          <td class="fw-bold">${item.namaGuru}</td>
+          <td>${item.namaSekolah}</td>
+          <td><span class="badge bg-secondary">${item.namaBengkel}</span></td>
+          <td>${item.bentukPelaksanaan}</td>
+          <td class="text-center">
+            <button class="btn btn-sm btn-danger" onclick="aksiPDF(${item.rowNumber})"><i class="bi bi-file-pdf"></i> PDF</button>
+            ${butangEditHTML}
+            ${butangPadamHTML}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function aksiEdit(rowNumber) {
+      if(!cacheDataDashboard) return;
+      var dataSkrip = cacheDataDashboard.senarai.find(item => item.rowNumber === rowNumber);
+      if (!dataSkrip) return;
+
+      document.getElementById('formTitle').innerHTML = `<i class="bi bi-pencil-square"></i> Kemaskini / Edit Laporan Guru`;
+      document.getElementById('btn-submit-borang').innerText = "Simpan Perubahan Laporan";
+      document.getElementById('edit-rowNumber').value = rowNumber;
+      
+      document.getElementById('form-namaGuru').value = dataSkrip.namaGuru;
+      document.getElementById('form-namaSekolah').value = dataSkrip.namaSekolah;
+      document.getElementById('form-emelDelima').value = dataSkrip.emelDelima;
+      document.getElementById('form-namaBengkel').value = dataSkrip.namaBengkel;
+      
+      if(dataSkrip.tarikhMulaAsal) document.getElementById('form-tarikhMula').value = dataSkrip.tarikhMulaAsal;
+      if(dataSkrip.tarikhTamatAsal) document.getElementById('form-tarikhTamat').value = dataSkrip.tarikhTamatAsal;
+      if(dataSkrip.tarikhPelaksanaanAsal) document.getElementById('form-tarikhPelaksanaan').value = dataSkrip.tarikhPelaksanaanAsal;
+      
+      document.getElementById('form-bentukPelaksanaan').value = dataSkrip.bentukPelaksanaan;
+
+      if(dataSkrip.s1) document.getElementById(`s1_${dataSkrip.s1}`).checked = true;
+      if(dataSkrip.s2) document.getElementById(`s2_${dataSkrip.s2}`).checked = true;
+      if(dataSkrip.s3) document.getElementById(`s3_${dataSkrip.s3}`).checked = true;
+      if(dataSkrip.s4) document.getElementById(`s4_${dataSkrip.s4}`).checked = true;
+      if(dataSkrip.s5) document.getElementById(`s5_${dataSkrip.s5}`).checked = true;
+
+      tukarHalaman('page-borang');
+      window.scrollTo({ top: 200, behavior: 'smooth' });
+    }
+
+    function resetBorang() {
+      document.getElementById('borangPelaporan').reset();
+      document.getElementById('edit-rowNumber').value = "";
+      document.getElementById('form-emelDelima').value = userSession.email; // Isikan semula emel milik user aktif
+      document.getElementById('formTitle').innerHTML = `<i class="bi bi-pencil-square"></i> Borang Pelaporan Bengkel Baru`;
+      document.getElementById('btn-submit-borang').innerText = "Simpan Rekod & Laporan";
+    }
+
+    function aksiPDF(rowNumber) {
+      document.getElementById('loading').style.display = 'flex';
+      document.getElementById('loadingText').innerText = "Sedang menjana dokumentasi PDF... Sila tunggu sebentar...";
+      google.script.run.withSuccessHandler(function(pdfId) {
+        document.getElementById('loading').style.display = 'none';
+        if(pdfId) {
+          window.open("https://drive.google.com/file/d/" + pdfId + "/view", '_blank');
+        } else {
+          alert("Gagal menjana fail PDF.");
+        }
+      }).janaLaporanPDF(rowNumber);
+    }
+
+    function aksiPadam(rowNumber) {
+      if(confirm("Adakah anda pasti mahu memadam rekod laporan guru ini?")) {
+        document.getElementById('loading').style.display = 'flex';
+        google.script.run.withSuccessHandler(function(msg) {
+          alert(msg);
+          muatDataDashboard();
+        }).padamRekod(rowNumber);
+      }
+    }
+
+  <script>
+    // ==========================================
+    // PENTING: SALIN DAN MASUKKAN URL WEB APP CIKGU DI SINI
+    // ==========================================
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwMwymrd1blI5pN2e1flsw2MLTfwIK0VH_9eV6dpENcSH9EOtdHdmJDRqsXWQb-2iYB/exec"; 
+
+    google.charts.load('current', {'packages':['corechart']});
+    var cacheDataDashboard = null;
+    var userSession = { email: "", role: "" };
+
+    // FUNGSI UTAMA LOG MASUK KESELAMATAN STANDARD GITHUB
+    function prosesMasukSistem(e) {
+      e.preventDefault();
+      var emailVal = document.getElementById('login-email').value.trim().toLowerCase();
+      var passVal = document.getElementById('login-password').value;
+      var alertBox = document.getElementById('login-alert');
+      
+      alertBox.style.display = 'none';
+      
+      // 1. Sekatan Domain: Mesti ID DELIMa sahaja
+      if (!emailVal.endsWith("@moe-dl.edu.my")) {
+        alertBox.innerText = "Akses disekat! Sila gunakan ID DELIMa rasmi (@moe-dl.edu.my) sahaja.";
+        alertBox.style.display = 'block';
+        return;
+      }
+      
+      // 2. Semak syarat login Admin dan User biasa
+      if (emailVal === "ppd-b050-cm10@moe-dl.edu.my" && passVal === "DELIMa@123") {
+        userSession.email = emailVal;
+        userSession.role = "ADMIN";
+      } else if (passVal === "DELIMa@123") {
+        userSession.email = emailVal;
+        userSession.role = "USER";
+      } else {
+        alertBox.innerText = "Kata laluan salah! Sila masukkan kata laluan yang betul.";
+        alertBox.style.display = 'block';
+        return;
+      }
+      
+      // Jika lulus semakan keselamatan di atas, sistem akan dibuka terus
+      document.getElementById('login-page').style.display = 'none';
+      document.getElementById('dashboard-content').style.display = 'block';
+      document.getElementById('form-emelDelima').value = userSession.email;
+      
+      muatDataDashboard();
+    }
+
+    function muatDataDashboard() {
+      document.getElementById('loading').style.display = 'flex';
+      document.getElementById('loadingText').innerText = "Sila tunggu... Memuatkan data dari Google Sheets...";
+
+      fetch(`${WEB_APP_URL}?action=ambilData`)
+        .then(res => res.json())
+        .then(res => {
+          document.getElementById('loading').style.display = 'none';
+          if (res) {
+            cacheDataDashboard = res;
+            document.getElementById('txt-total').innerText = res.total;
+            isiPilihanDropdownFilter(res.dataGrafBengkel);
+            binaJadual(res.senarai);
+            binaGraf(res.dataGrafBengkel);
+          }
+        })
+        .catch(() => {
+          document.getElementById('loading').style.display = 'none';
+        });
+    }
+
+    function hantarDataBorang(e) {
+      e.preventDefault();
+      document.getElementById('loading').style.display = 'flex';
+      document.getElementById('loadingText').innerText = "Sedang menyimpan data... Sila tunggu...";
+      
+      var form = document.getElementById('borangPelaporan');
+      var fd = new FormData(form);
+      var obj = {};
+      fd.forEach((value, key) => { obj[key] = value; });
+      obj['emelDelima'] = userSession.email;
+
+      var kounterProses = 0;
+      var senaraiFailId = ['g1', 'g2', 'g3', 'g4'];
+
+      function bacaSeterusnya() {
+        if(kounterProses < 4) {
+          var fInput = document.getElementById(senaraiFailId[kounterProses]);
+          var file = fInput.files[0];
+          kounterProses++;
+          
+          if(file) {
+            var fr = new FileReader();
+            fr.onload = function(evt) {
+              obj['gambar' + kounterProses] = {
+                bytes: Array.from(new Uint8Array(evt.target.result)),
+                mimeType: file.type,
+                filename: file.name
+              };
+              bacaSeterusnya();
+            };
+            fr.readAsArrayBuffer(file);
+          } else {
+            obj['gambar' + kounterProses] = null;
+            bacaSeterusnya();
+          }
+        } else {
+          // GITHUB FETCH POST KE WEB APP URL GOOGLE SHEETS
+          fetch(WEB_APP_URL, {
+            method: "POST",
+            body: JSON.stringify(obj)
+          })
+          .then(res => res.json())
+          .then(res => {
+            document.getElementById('loading').style.display = 'none';
+            alert(res.msg);
+            document.getElementById('borangPelaporan').reset();
+            document.getElementById('form-rowNumber').value = "";
+            document.getElementById('btn-submit-borang').innerHTML = '<i class="bi bi-cloud-arrow-up-fill"></i> Simpan Laporan';
+            tukarHalaman('page-senarai');
+            muatDataDashboard();
+          })
+          .catch(() => {
+            document.getElementById('loading').style.display = 'none';
+            alert("Ralat semasa menyimpan data.");
+          });
+        }
+      }
+      bacaSeterusnya();
+    }
+
+    function isiPilihanDropdownFilter(dataGraf) {
+      var dropdown = document.getElementById('filter-bengkel');
+      dropdown.innerHTML = '<option value="SEMUA">-- Semua Tajuk Bengkel --</option>';
+      for (var i = 1; i < dataGraf.length; i++) {
+        var tajuk = dataGraf[i][0];
+        var opt = document.createElement('option');
+        opt.value = tajuk;
+        opt.innerText = tajuk;
+        dropdown.appendChild(opt);
+      }
+    }
+
+    function binaJadual(senarai) {
+      var tbody = document.getElementById('table-body');
+      tbody.innerHTML = "";
+      if (!senarai || senarai.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-muted">Tiada sebarang laporan dijumpai.</td></tr>';
+        return;
+      }
+      senarai.forEach(function(row) {
+        var tr = document.createElement('tr');
+        var tdAksi = "";
+        
+        if (userSession.role === "ADMIN" || userSession.email === row.emelDelima) {
+          tdAksi = `<button class="btn btn-sm btn-warning py-0 px-1 me-1 small" onclick="panggilEditForm(${row.rowNumber})"><i class="bi bi-pencil-square"></i></button>`;
+          if(userSession.role === "ADMIN") {
+             tdAksi += `<button class="btn btn-sm btn-danger py-0 px-1 small" onclick="padamRekodLaporan(${row.rowNumber})"><i class="bi bi-trash-fill"></i></button>`;
+          }
+        } else {
+          tdAksi = `<span class="badge bg-secondary small text-white">Tiada Capaian</span>`;
+        }
+
+        tr.innerHTML = `<td>${row.index}</td>
+          <td>${row.tarikhLapor}</td>
+          <td class="text-start">${row.namaGuru}</td>
+          <td>${row.namaSekolah}</td>
+          <td class="text-start small fw-bold text-primary">${row.namaBengkel}</td>
+          <td>${row.tarikhMula}</td>
+          <td>${row.tarikhTamat}</td>
+          <td class="fw-bold text-success">${row.purataSkor}</td>
+          <td><div class="d-flex justify-content-center">${tdAksi}</div></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function tapisJadualDariCache() {
+      var kriteria = document.getElementById('filter-bengkel').value;
+      if (!cacheDataDashboard) return;
+      if (kriteria === "SEMUA") {
+        binaJadual(cacheDataDashboard.senarai);
+      } else {
+        var senaraiDitapis = cacheDataDashboard.senarai.filter(function(row) {
+          return row.namaBengkel === kriteria;
+        });
+        binaJadual(senaraiDitapis);
+      }
+    }
+
+    function binaGraf(dataGraf) {
+      if(!dataGraf || dataGraf.length <= 1) {
+         document.getElementById('chart-bengkel').innerHTML = "<div class='text-muted text-center pt-5'>Data graf tidak mencukupi untuk dipaparkan.</div>";
+         return;
+      }
+      var data = google.visualization.arrayToDataTable(dataGraf);
+      var options = {
+        hAxis: { title: 'Purata Skor Kepuasan', minValue: 1, maxValue: 5, textStyle: {fontSize: 11} },
+        vAxis: { title: 'Tajuk Kursus / Bengkel', textStyle: {fontSize: 10} },
+        bars: 'horizontal',
+        legend: { position: 'none' },
+        colors: ['#0d6efd'],
+        chartArea: {width: '55%', height: '80%'}
+      };
+      var chart = new google.visualization.BarChart(document.getElementById('chart-bengkel'));
+      chart.draw(data, options);
+    }
+
+    function panggilEditForm(rowNum) {
+      if(!cacheDataDashboard) return;
+      var dataObj = cacheDataDashboard.senarai.find(r => r.rowNumber === rowNum);
+      if(!dataObj) return;
+
+      document.getElementById('form-rowNumber').value = dataObj.rowNumber;
+      document.getElementsByName('namaGuru')[0].value = dataObj.namaGuru;
+      document.getElementsByName('namaSekolah')[0].value = dataObj.namaSekolah;
+      document.getElementsByName('namaBengkel')[0].value = dataObj.namaBengkel;
+      document.getElementsByName('tarikhMula')[0].value = dataObj.tarikhMulaRaw || "";
+      document.getElementsByName('tarikhTamat')[0].value = dataObj.tarikhTamatRaw || "";
+      document.getElementsByName('s1')[0].value = dataObj.s1;
+      document.getElementsByName('s2')[0].value = dataObj.s2;
+      document.getElementsByName('s3')[0].value = dataObj.s3;
+      document.getElementsByName('s4')[0].value = dataObj.s4;
+      document.getElementsByName('s5')[0].value = dataObj.s5;
+      document.getElementsByName('bentukPelaksanaan')[0].value = dataObj.bentukPelaksanaan || "";
+      document.getElementsByName('tarikhPelaksanaan')[0].value = dataObj.tarikhPelaksanaanRaw || "";
+
+      document.getElementById('btn-submit-borang').innerHTML = '<i class="bi bi-pencil-square"></i> Kemas Kini Laporan';
+      tukarHalaman('page-borang');
+    }
+
+    function batalEditForm() {
+      document.getElementById('borangPelaporan').reset();
+      document.getElementById('form-rowNumber').value = "";
+      document.getElementById('btn-submit-borang').innerHTML = '<i class="bi bi-cloud-arrow-up-fill"></i> Simpan Laporan';
+    }
+
+    function padamRekodLaporan(rowNum) {
+      if(confirm("Adakah anda pasti mahu memadam rekod laporan ini secara kekal dari Google Sheets?")) {
+        document.getElementById('loading').style.display = 'flex';
+        document.getElementById('loadingText').innerText = "Sedang memadam rekod...";
+        
+        fetch(`${WEB_APP_URL}?action=padam&rowNumber=${rowNum}`)
+          .then(res => res.json())
+          .then(res => {
+            document.getElementById('loading').style.display = 'none';
+            alert(res.msg);
+            muatDataDashboard();
+          });
+      }
+    }
+
+    function tukarHalaman(sectionId) {
+      document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active-section'));
+      document.getElementById(sectionId).classList.add('active-section');
+      
+      document.querySelectorAll('.nav-custom-btn').forEach(btn => {
+         btn.classList.remove('btn-primary');
+         btn.classList.add('btn-outline-primary');
+      });
+      
+      if(sectionId === 'page-utama') document.getElementById('btn-utama').className = 'btn btn-primary nav-custom-btn';
+      if(sectionId === 'page-borang') document.getElementById('btn-borang').className = 'btn btn-primary nav-custom-btn';
+      if(sectionId === 'page-senarai') document.getElementById('btn-senarai').className = 'btn btn-primary nav-custom-btn';
+    }
+
+    function prosesKeluarSistem() {
+      if(confirm("Adakah anda pasti mahu log keluar?")) {
+        userSession = { email: "", role: "" };
+        document.getElementById('formLoginSistem').reset();
+        batalEditForm();
+        document.getElementById('dashboard-content').style.display = 'none';
+        document.getElementById('login-page').style.display = 'flex';
+      }
+    }
+  </script>
+</body>
+</html>
