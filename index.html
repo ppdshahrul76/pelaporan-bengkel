@@ -373,39 +373,61 @@
       chart.draw(data, options);
     }
 
-    function hantarDataBorang(e) {
-      e.preventDefault();
-      document.getElementById('loading').style.display = 'flex';
-      document.getElementById('loadingText').innerText = "Sedang menyimpan data...";
+   function hantarDataBorang(e) {
+  e.preventDefault();
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('loadingText').innerText = "Sedang menyimpan data... Sila tunggu...";
+  
+  var form = document.getElementById('borangPelaporan');
+  var fd = new FormData(form);
+  var obj = {};
+  fd.forEach((value, key) => { obj[key] = value; });
+  obj['emelDelima'] = userSession.email; // Kunci data emel mengikut akaun aktif login
+
+  var kounterProses = 0;
+  var senaraiFailId = ['g1', 'g2', 'g3', 'g4'];
+
+  function bacaSeterusnya() {
+    if(kounterProses < 4) {
+      var fInput = document.getElementById(senaraiFailId[kounterProses]);
+      var file = fInput.files[0];
+      kounterProses++;
       
-      var form = document.getElementById('borangPelaporan');
-      var fd = new FormData(form);
-      var obj = {};
-      fd.forEach((value, key) => { obj[key] = value; });
-      obj['emelDelima'] = userSession.email; 
-
-      var kounterProses = 0;
-      var senaraiFailId = ['g1', 'g2', 'g3', 'g4'];
-
-      function bacaSeterusnya() {
-        if(kounterProses < 4) {
-          var fInput = document.getElementById(senaraiFailId[kounterProses]);
-          var file = fInput.files[0];
-          kounterProses++;
-          if(file) {
-            var fr = new FileReader();
-            fr.onload = function(evt) {
-              obj['gambar' + kounterProses] = {
-                base64: evt.target.result.split(',')[1],
-                mimeType: file.type,
-                filename: file.name
-              };
-              bacaSeterusnya();
-            };
-            fr.readAsDataURL(file);
-          } else {
-            obj['gambar' + kounterProses] = null;
-            bacaSeterusnya();
+      if(file) {
+        var fr = new FileReader();
+        fr.onload = function(evt) {
+          // Menggunakan format 'bytes' asal untuk keserasian Google Apps Script
+          obj['gambar' + kounterProses] = {
+            bytes: Array.from(new Uint8Array(evt.target.result)),
+            mimeType: file.type,
+            filename: file.name
+          };
+          bacaSeterusnya();
+        };
+        fr.readAsArrayBuffer(file); // Membaca sebagai ArrayBuffer mengikut struktur asal fail anda
+      } else {
+        obj['gambar' + kounterProses] = null;
+        bacaSeterusnya();
+      }
+    } else {
+      // Menggunakan fungsi Google Script Run asal projek anda untuk menyimpan ke Google Sheets
+      google.script.run.withSuccessHandler(function(msg) {
+        document.getElementById('loading').style.display = 'none';
+        alert(msg);
+        resetBorang();
+        batalEditForm();
+        muatDataDashboard();
+        tukarHalaman('page-utama');
+      })
+      .withFailureHandler(function(err) {
+        document.getElementById('loading').style.display = 'none';
+        alert("Ralat sistem ketika menyimpan rekod laporan: " + err);
+      })
+      .simpanBorang(obj); // Memanggil fungsi backend simpanBorang() anda
+    }
+  }
+  bacaSeterusnya();
+}
           }
         } else {
           fetch(`${WEB_APP_URL}?action=simpanBorang`, { method: 'POST', body: JSON.stringify(obj) })
