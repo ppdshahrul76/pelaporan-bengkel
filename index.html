@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Penilaian Kursus/Bengkel</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  
+  <style>
+    body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .main-container { width: 100%; max-width: 1240px; margin: 0 auto; padding: 0 15px; }
+    #dashboard-content { display: none; }
+    #login-page { display: flex; justify-content: center; align-items: center; min-height: 85vh; }
+    .login-card { background: white; border-radius: 15px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 450px; border-top: 6px solid #0d6efd; text-align: center; }
+    .header-banner { background: #ffffff; color: #1e293b; padding: 35px 20px; border-radius: 15px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; border-top: 6px solid #0d6efd; position: relative; }
+    .logout-btn-container { position: absolute; top: 15px; right: 20px; }
+    .nav-custom-btn { font-weight: 600; padding: 10px 20px; border-radius: 8px; transition: all 0.3s; }
+    .card-custom { border: none; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); margin-bottom: 20px; background: white; }
+    .scorecard { text-align: center; padding: 30px; background: white; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+    .scorecard h1 { font-size: 3.5rem; color: #0d6efd; font-weight: 700; margin: 10px 0; }
+    .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+    .page-section { display: none; }
+    .active-section { display: block; }
+  </style>
+</head>
+<body>
+
+  <div id="loading" class="loading-overlay" style="display:none;">
+    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+    <h5 id="loadingText" class="mt-3 text-secondary font-weight-bold">Sistem sedang memuatkan data...</h5>
+  </div>
+
+  <div class="container pb-5">
+    
+    <div id="login-page">
+      <div class="login-card">
+        <img id="logo-ppd" src="TAMPAL_KOD_BASE64_DATA_URI_DISINI" alt="Logo PPD" class="mb-3" style="width: 150px; height: auto; display:block; margin:0 auto;">
+        
+        <h4 class="fw-bold text-dark mb-1">SISTEM PELAPORAN BENGKEL</h4>
+        <p class="text-muted small mb-4">Sila log masuk menggunakan ID DELIMa anda</p>
+        
+        <form id="formLoginSistem" onsubmit="prosesMasukSistem(event)">
+          <div class="mb-3 text-start">
+            <label class="form-label small fw-bold text-secondary">ID DELIMa / Emel Admin</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="bi bi-envelope-fill text-muted"></i></span>
+              <input type="email" id="login-email" class="form-control" placeholder="contoh: g-12345678@moe-dl.edu.my" required>
+            </div>
+          </div>
+          <div class="mb-4 text-start">
+            <label class="form-label small fw-bold text-secondary">Kata Laluan (Password)</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="bi bi-lock-fill text-muted"></i></span>
+              <input type="password" id="login-password" class="form-control" placeholder="Masukkan password" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary w-100 fw-bold py-2"><i class="bi bi-box-arrow-in-right"></i> Log Masuk Sistem</button>
+        </form>
+        <div id="login-alert" class="alert alert-danger mt-3 small p-2" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div id="dashboard-content" class="main-container">
+      <div class="header-banner">
+        <div class="logout-btn-container">
+          <button class="btn btn-sm btn-outline-danger fw-bold" onclick="prosesKeluarSistem()"><i class="bi bi-box-arrow-left"></i> Log Keluar</button>
+        </div>
+        <h1 class="fw-bold mb-2 text-dark" style="font-size: 2.2rem;">DASHBOARD PENILAIAN KURSUS/BENGKEL</h1>
+        <h3 class="fw-bold mb-2 text-primary" style="font-size: 1.6rem;">PELAKSANAAN DI SEKOLAH</h3>
+        <p class="text-muted fw-semibold mb-0" style="font-size: 1.1rem;">SEKTOR PEMBELAJARAN</p>
+      </div>
+
+      <div class="d-flex flex-wrap gap-2 mb-4 justify-content-center">
+        <button id="btn-utama" class="btn btn-primary nav-custom-btn" onclick="tukarHalaman('page-utama')"><i class="bi bi-grid-1x2-fill"></i> Paparan Utama</button>
+        <button id="btn-borang" class="btn btn-outline-primary nav-custom-btn" onclick="tukarHalaman('page-borang')"><i class="bi bi-file-earmark-text-fill"></i> Borang Pelaporan</button>
+        <button id="btn-senarai" class="btn btn-outline-primary nav-custom-btn" onclick="tukarHalaman('page-senarai')"><i class="bi bi-table"></i> Senarai Laporan Guru</button>
+      </div>
+
+      <div id="page-utama" class="page-section active-section">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <div class="scorecard card-custom h-100 d-flex flex-column justify-content-center">
+              <h5 class="text-uppercase text-muted">Jumlah Laporan Diterima</h5>
+              <h1 id="txt-total">0</h1>
+              <p class="text-secondary mb-0">Respons keseluruhan guru sekolah</p>
+            </div>
+          </div>
+          <div class="col-md-8 mb-3">
+            <div class="card card-custom p-3 h-100">
+              <h5 class="card-title text-muted px-2"><i class="bi bi-bar-chart-line-fill"></i> Purata Skor Kepuasan Mengikut Tajuk Bengkel</h5>
+              <div id="chart-bengkel" style="width: 100%; height: 300px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="page-borang" class="page-section">
+         <div class="card card-custom p-4">
+            <h5 class="text-primary fw-bold mb-3"><i class="bi bi-pencil-square"></i> Sila Isi Borang Laporan Di Sini</h5>
+            <p class="text-muted">Gunakan telefon anda untuk melengkapkan pelaporan aktiviti/bengkel dengan mudah.</p>
+         </div>
+      </div>
+      <div id="page-senarai" class="page-section"></div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // TAMTANG URL WEB APP GOOGLE SCRIPT DI SINI
+    // ==========================================
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwdjCkea0IOxU9ybg8hj2rJ03xqO7zNuEMpwu7HS1saCZOKxsmxVV5DayrG5_8kt8-Q/exec"; 
+
+    google.charts.load('current', {'packages':['corechart']});
+    var userSession = { email: "", role: "" };
+
+    function prosesMasukSistem(e) {
+      e.preventDefault();
+      var emailVal = document.getElementById('login-email').value;
+      var passVal = document.getElementById('login-password').value;
+      var alertBox = document.getElementById('login-alert');
+      
+      alertBox.style.display = 'none';
+      document.getElementById('loading').style.display = 'flex';
+
+      fetch(`${WEB_APP_URL}?action=login&email=${encodeURIComponent(emailVal)}&password=${encodeURIComponent(passVal)}`)
+        .then(res => res.json())
+        .then(res => {
+          document.getElementById('loading').style.display = 'none';
+          if (res.status === "SUCCESS") {
+            userSession.email = emailVal.trim().toLowerCase();
+            userSession.role = res.role;
+            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('dashboard-content').style.display = 'block';
+            muatDataDashboard();
+          } else {
+            alertBox.innerText = res.msg;
+            alertBox.style.display = 'block';
+          }
+        }).catch(() => {
+          document.getElementById('loading').style.display = 'none';
+          alertBox.innerText = "Ralat menghubungkan ke pelayan Google Sheets.";
+          alertBox.style.display = 'block';
+        });
+    }
+
+    function muatDataDashboard() {
+      document.getElementById('loading').style.display = 'flex';
+      fetch(`${WEB_APP_URL}?action=ambilData`)
+        .then(res => res.json())
+        .then(res => {
+          document.getElementById('loading').style.display = 'none';
+          if (res) {
+            document.getElementById('txt-total').innerText = res.total;
+          }
+        });
+    }
+
+    function tukarHalaman(sectionId) {
+      document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active-section'));
+      document.getElementById(sectionId).classList.add('active-section');
+      document.querySelectorAll('.nav-custom-btn').forEach(btn => {
+         btn.classList.remove('btn-primary');
+         btn.classList.add('btn-outline-primary');
+      });
+      if(sectionId === 'page-utama') document.getElementById('btn-utama').className = 'btn btn-primary nav-custom-btn';
+      if(sectionId === 'page-borang') document.getElementById('btn-borang').className = 'btn btn-primary nav-custom-btn';
+      if(sectionId === 'page-senarai') document.getElementById('btn-senarai').className = 'btn btn-primary nav-custom-btn';
+    }
+
+    function prosesKeluarSistem() {
+      userSession = { email: "", role: "" };
+      document.getElementById('dashboard-content').style.display = 'none';
+      document.getElementById('login-page').style.display = 'flex';
+    }
+  </script>
+</body>
+</html>
