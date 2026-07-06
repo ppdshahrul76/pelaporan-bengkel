@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Penilaian Kursus/Bengkel</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  
+  <style>
+    body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .main-container { width: 100%; max-width: 1240px; margin: 0 auto; padding: 0 15px; }
+    
+    /* Sekatan Paparan Utama Sebelum Login */
+    #dashboard-content { display: none; }
+    #login-page { display: flex; justify-content: center; align-items: center; min-height: 85vh; }
+    
+    /* Rekabentuk Kad Login */
+    .login-card { background: white; border-radius: 15px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 450px; border-top: 6px solid #0d6efd; text-align: center; }
+    
+    /* Spanduk Pengepala */
+    .header-banner { background: #ffffff; color: #1e293b; padding: 35px 20px; border-radius: 15px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; border-top: 6px solid #0d6efd; position: relative; }
+    .logout-btn-container { position: absolute; top: 15px; right: 20px; }
+    
+    /* Butang Navigasi Khas */
+    .nav-custom-btn { font-weight: 600; padding: 10px 20px; border-radius: 8px; transition: all 0.3s; }
+    .card-custom { border: none; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); margin-bottom: 20px; background: white; }
+    
+    /* Skor & Kad KPI */
+    .scorecard { text-align: center; padding: 30px; background: white; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+    .scorecard h1 { font-size: 3.5rem; color: #0d6efd; font-weight: 700; margin: 10px 0; }
+    
+    /* Lapisan Loading */
+    .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.85); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+    
+    /* Kawalan Bahagian Paparan */
+    .page-section { display: none; }
+    .active-section { display: block; }
+  </style>
+</head>
+<body>
+
+  <div id="loading" class="loading-overlay" style="display:none;">
+    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+    <h5 id="loadingText" class="mt-3 text-secondary font-weight-bold">Sistem sedang memuatkan data... Sila tunggu...</h5>
+  </div>
+
+  <div class="container pb-5">
+    
+    <div id="login-page">
+      <div class="login-card">
+        <img src="https://lh3.googleusercontent.com/d/1_9i6wH9wTfBly7TdfWz_N2ZlH6uH8hN_=w400" alt="Logo PPD" class="mb-3" style="width: 150px; height: auto; display:block; margin:0 auto;">
+        <h4 class="fw-bold text-dark mb-1">SISTEM PELAPORAN BENGKEL</h4>
+        <p class="text-muted small mb-4">Sila log masuk menggunakan ID DELIMa anda</p>
+        
+        <form id="formLoginSistem" onsubmit="prosesMasukSistem(event)">
+          <div class="mb-3 text-start">
+            <label class="form-label small fw-bold text-secondary">ID DELIMa / Emel Admin</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="bi bi-envelope-fill text-muted"></i></span>
+              <input type="email" id="login-email" class="form-control" placeholder="contoh: g-12345678@moe-dl.edu.my" required>
+            </div>
+          </div>
+          <div class="mb-4 text-start">
+            <label class="form-label small fw-bold text-secondary">Kata Laluan (Password)</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="bi bi-lock-fill text-muted"></i></span>
+              <input type="password" id="login-password" class="form-control" placeholder="Masukkan password" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary w-100 fw-bold py-2"><i class="bi bi-box-arrow-in-right"></i> Log Masuk Sistem</button>
+        </form>
+        <div id="login-alert" class="alert alert-danger mt-3 small p-2" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div id="dashboard-content" class="main-container">
+      <div class="header-banner">
+        <div class="logout-btn-container">
+          <button class="btn btn-sm btn-outline-danger fw-bold" onclick="prosesKeluarSistem()"><i class="bi bi-box-arrow-left"></i> Log Keluar</button>
+        </div>
+        <h1 class="fw-bold mb-2 text-dark" style="font-size: 2.2rem;">DASHBOARD PENILAIAN KURSUS/BENGKEL</h1>
+        <h3 class="fw-bold mb-2 text-primary" style="font-size: 1.6rem;">PELAKSANAAN DI SEKOLAH</h3>
+        <p class="text-muted fw-semibold mb-0" style="font-size: 1.1rem;">SEKTOR PEMBELAJARAN</p>
+      </div>
+
+      <div class="d-flex flex-wrap gap-2 mb-4 justify-content-center">
+        <button id="btn-utama" class="btn btn-primary nav-custom-btn" onclick="tukarHalaman('page-utama')"><i class="bi bi-grid-1x2-fill"></i> Paparan Utama</button>
+        <button id="btn-borang" class="btn btn-outline-primary nav-custom-btn" onclick="tukarHalaman('page-borang')"><i class="bi bi-file-earmark-text-fill"></i> Borang Pelaporan</button>
+        <button id="btn-senarai" class="btn btn-outline-primary nav-custom-btn" onclick="tukarHalaman('page-senarai')"><i class="bi bi-table"></i> Senarai Laporan Guru</button>
+      </div>
+
+      <div id="page-utama" class="page-section active-section">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <div class="scorecard card-custom h-100 d-flex flex-column justify-content-center">
+              <h5 class="text-uppercase text-muted">Jumlah Laporan Diterima</h5>
+              <h1 id="txt-total">0</h1>
+              <p class="text-secondary mb-0">Respons keseluruhan guru sekolah</p>
+            </div>
+          </div>
+          <div class="col-md-8 mb-3">
+            <div class="card card-custom p-3 h-100">
+              <h5 class="card-title text-muted px-2"><i class="bi bi-bar-chart-line-fill"></i> Purata Skor Kepuasan Mengikut Tajuk Bengkel</h5>
+              <div id="chart-bengkel" style="width: 100%; height: 300px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="page-borang" class="page-section">
+        <div class="card card-custom p-4 shadow-sm">
+          <div class="d-flex align-items-center mb-4 border-bottom pb-2">
+            <h4 class="text-primary fw-bold mb-0"><i class="bi bi-file-earmark-medical-fill"></i> Borang Pelaporan Aktiviti Latihan/Bengkel</h4>
+          </div>
+          <form id="borangPelaporan" onsubmit="hantarDataBorang(event)">
+            <input type="hidden" id="form-rowNumber" name="rowNumber">
+            <input type="hidden" id="form-emelDelima" name="emelDelima">
+            
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label small fw-bold">Nama Guru Melapor</label>
+                <input type="text" class="form-control" name="namaGuru" required placeholder="Nama penuh anda">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label small fw-bold">Nama Sekolah / Sektor</label>
+                <input type="text" class="form-control" name="namaSekolah" required placeholder="Contoh: SK Kuala Kubu Bharu">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Nama Kursus / Bengkel / Aktiviti Latihan</label>
+              <input type="text" class="form-control" name="namaBengkel" required placeholder="Sila masukkan tajuk penuh kursus">
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label small fw-bold">Tarikh Mula</label>
+                <input type="date" class="form-control" name="tarikhMula" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label small fw-bold">Tarikh Tamat</label>
+                <input type="date" class="form-control" name="tarikhTamat" required>
+              </div>
+            </div>
+
+            <h5 class="text-secondary fw-bold mt-4 mb-3 border-bottom pb-2" style="font-size:1rem;"><i class="bi bi-star-fill text-warning"></i> Skor Penilaian Kursus (Skala 1 - 5)</h5>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label small fw-bold">S1: Penyampaian Penceramah</label>
+                <select class="form-select" name="s1" required><option value="5">5 - Sangat Cemerlang</option><option value="4">4 - Baik</option><option value="3">3 - Memuaskan</option><option value="2">2 - Kurang Memuaskan</option><option value="1">1 - Lemah</option></select>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label small fw-bold">S2: Bahan / Nota Latihan</label>
+                <select class="form-select" name="s2" required><option value="5">5</option><option value="4">4</option><option value="3">3</option><option value="2">2</option><option value="1">1</option></select>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label small fw-bold">S3: Pengurusan Urus Setia</label>
+                <select class="form-select" name="s3" required><option value="5">5</option><option value="4">4</option><option value="3">3</option><option value="2">2</option><option value="1">1</option></select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label small fw-bold">S4: Kesesuaian Pengisian & Kandungan</label>
+                <select class="form-select" name="s4" required><option value="5">5</option><option value="4">4</option><option value="3">3</option><option value="2">2</option><option value="1">1</option></select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label small fw-bold">S5: Impak Terhadap Pembelajaran</label>
+                <select class="form-select" name="s5" required><option value="5">5</option><option value="4">4</option><option value="3">3</option><option value="2">2</option><option value="1">1</option></select>
+              </div>
+            </div>
+
+            <h5 class="text-secondary fw-bold mt-4 mb-3 border-bottom pb-2" style="font-size:1rem;"><i class="bi bi-activity text-success"></i> Pelaksanaan Seterusnya di Sekolah</h5>
+            <div class="mb-3">
+              <label class="form-label small fw-bold">Bentuk Pelaksanaan / Tindakan Susulan</label>
+              <textarea class="form-control" name="bentukPelaksanaan" rows="3" placeholder="Sila nyatakan kaedah penyebaran latihan di peringkat sekolah..." required></textarea>
+            </div>
+            <div class="mb-4 col-md-6">
+              <label class="form-label small fw-bold">Tarikh Pelaksanaan yang Dirancang</label>
+              <input type="date" class="form-control" name="tarikhPelaksanaan" required>
+            </div>
+
+            <h5 class="text-secondary fw-bold mt-4 mb-3 border-bottom pb-2" style="font-size:1rem;"><i class="bi bi-images text-danger"></i> Muat Naik Gambar Bukti Latihan (Maksimum 4 Gambar)</h5>
+            <div class="row">
+              <div class="col-md-6 mb-3"><label class="form-label small text-muted">Gambar Aktiviti 1</label><input type="file" class="form-control" id="g1" accept="image/*"></div>
+              <div class="col-md-6 mb-3"><label class="form-label small text-muted">Gambar Aktiviti 2</label><input type="file" class="form-control" id="g2" accept="image/*"></div>
+              <div class="col-md-6 mb-3"><label class="form-label small text-muted">Gambar Aktiviti 3</label><input type="file" class="form-control" id="g3" accept="image/*"></div>
+              <div class="col-md-6 mb-3"><label class="form-label small text-muted">Gambar Aktiviti 4</label><input type="file" class="form-control" id="g4" accept="image/*"></div>
+            </div>
+
+            <div class="mt-4 border-top pt-3 text-end">
+              <button type="button" class="btn btn-secondary me-2 fw-bold" onclick="batalEditForm()"><i class="bi bi-x-circle"></i> Kosongkan</button>
+              <button type="submit" class="btn btn-success fw-bold px-4" id="btn-submit-borang"><i class="bi bi-cloud-arrow-up-fill"></i> Simpan Laporan</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div id="page-senarai" class="page-section">
+        <div class="card card-custom p-4 shadow-sm">
+          <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 border-bottom pb-2">
+            <h4 class="text-primary fw-bold mb-0"><i class="bi bi-collection-play-fill"></i> Senarai Rekod Laporan Guru Sekolah</h4>
+            <div class="d-flex gap-2">
+              <select id="filter-bengkel" class="form-select form-select-sm" style="max-width:250px;" onchange="tapisJadualDariCache()">
+                <option value="SEMUA">-- Semua Tajuk Bengkel --</option>
+              </select>
+              <button class="btn btn-sm btn-primary" onclick="muatDataDashboard()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped align-middle small text-center" id="tableData">
+              <thead class="table-primary">
+                <tr>
+                  <th>No</th><th>Tarikh Lapor</th><th>Nama Guru</th><th>Sekolah</th><th>Nama Bengkel</th><th>Tarikh Mula</th><th>Tarikh Tamat</th><th>Purata Skor</th><th>Tindakan</th>
+                </tr>
+              </thead>
+              <tbody id="table-body">
+                <tr><td colspan="9" class="text-muted py-4">Memuatkan senarai data... Sila tunggu...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // PENTING: MASUKKAN URL WEB APP CIKGU DI SINI
+    // ==========================================
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxCD7Wtn2sVRI5Ul4T3olfjr_iwLGxCrApvCfbYDtMaISoeYtPRkkXCFGhOWvRGSWKW/exec"; // Ganti dengan URL /exec yang betul
+
+    google.charts.load('current', {'packages':['corechart']});
+    var cacheDataDashboard = null;
+    var userSession = { email: "", role: "" };
+
+    function prosesMasukSistem(e) {
+      e.preventDefault();
+      var emailVal = document.getElementById('login-email').value;
+      var passVal = document.getElementById('login-password').value;
+      var alertBox = document.getElementById('login-alert');
+      
+      alertBox.style.display = 'none';
+      document.getElementById('loading').style.display = 'flex';
+      document.getElementById('loadingText').innerText = "Mengesahkan identiti DELIMa...";
+
+      // MENGGUNAKAN FETCH UNTUK KOMUNIKASI GITHUB -> APPSCRIPT
+      fetch(`${WEB_APP_URL}?action=login&email=${encodeURIComponent(emailVal)}&password=${encodeURIComponent(passVal)}`)
+        .then(res => res.json())
+        .then(res => {
+          document.getElementById('loading').style.display = 'none';
+          if (res.status === "SUCCESS") {
+            userSession.email = emailVal.trim().toLowerCase();
+            userSession.role = res.role;
+            
+            document.getElementById('login-page').style.display = 'none';
+            document.getElementById('dashboard-content').style.display = 'block';
+            document.getElementById('form-emelDelima').value = userSession.email;
+            
+            muatDataDashboard();
+          } else {
+            alertBox.innerText = res.msg;
+            alertBox.style.display = 'block';
+          }
+        })
+        .catch(() => {
+          document.getElementById('loading').style.display = 'none';
+          alertBox.innerText = "Ralat sambungan rangkaian ke pelayan.";
+          alertBox.style.display = 'block';
+        });
+    }
+
+    function muatDataDashboard() {
+      document.getElementById('loading').style.display = 'flex';
+      document.getElementById('loadingText').innerText = "Sila tunggu... Memuatkan data dari Google Sheets...";
+
+      fetch(`${WEB_APP_URL}?action=ambilData`)
+        .then(res => res.json())
+        .then(res => {
+          document.getElementById('loading').style.display = 'none';
+          if (res) {
+            cacheDataDashboard = res;
+            document.getElementById('txt-total').innerText = res.total;
+            isiPilihanDropdownFilter(res.dataGrafBengkel);
+            binaJadual(res.senarai);
+            binaGraf(res.dataGrafBengkel);
+          }
+        })
+        .catch(() => {
+          document.getElementById('loading').style.display = 'none';
+        });
+    }
+
+    function hantarDataBorang(e) {
+      e.preventDefault();
+      document.getElementById('loading').style.display = 'flex';
+      document.getElementById('loadingText').innerText = "Sedang menyimpan data... Sila tunggu...";
+      
+      var form = document.getElementById('borangPelaporan');
+      var fd = new FormData(form);
+      var obj = {};
+      fd.forEach((value, key) => { obj[key] = value; });
+      obj['emelDelima'] = userSession.email;
+
+      var kounterProses = 0;
+      var senaraiFailId = ['g1', 'g2', 'g3', 'g4'];
+
+      function bacaSeterusnya() {
+        if(kounterProses < 4) {
+          var fInput = document.getElementById(senaraiFailId[kounterProses]);
+          var file = fInput.files[0];
+          kounterProses++;
+          
+          if(file) {
+            var fr = new FileReader();
+            fr.onload = function(evt) {
+              obj['gambar' + kounterProses] = {
+                bytes: Array.from(new Uint8Array(evt.target.result)),
+                mimeType: file.type,
+                filename: file.name
+              };
+              bacaSeterusnya();
+            };
+            fr.readAsArrayBuffer(file);
+          } else {
+            obj['gambar' + kounterProses] = null;
+            bacaSeterusnya();
+          }
+        } else {
+          // MENGGUNAKAN FETCH POST UNTUK SIMPAN DATA DARI GITHUB
+          fetch(WEB_APP_URL, {
+            method: "POST",
+            body: JSON.stringify(obj)
+          })
+          .then(res => res.json())
+          .then(res => {
+            document.getElementById('loading').style.display = 'none';
+            alert(res.msg);
+            document.getElementById('borangPelaporan').reset();
+            document.getElementById('form-rowNumber').value = "";
+            document.getElementById('btn-submit-borang').innerHTML = '<i class="bi bi-cloud-arrow-up-fill"></i> Simpan Laporan';
+            tukarHalaman('page-senarai');
+            muatDataDashboard();
+          })
+          .catch(() => {
+            document.getElementById('loading').style.display = 'none';
+            alert("Ralat semasa menyimpan data.");
+          });
+        }
+      }
+      bacaSeterusnya();
+    }
+
+    function isiPilihanDropdownFilter(dataGraf) {
+      var dropdown = document.getElementById('filter-bengkel');
+      dropdown.innerHTML = '<option value="SEMUA">-- Semua Tajuk Bengkel --</option>';
+      for (var i = 1; i < dataGraf.length; i++) {
+        var tajuk = dataGraf[i][0];
+        var opt = document.createElement('option');
+        opt.value = tajuk;
+        opt.innerText = tajuk;
+        dropdown.appendChild(opt);
+      }
+    }
+
+    function binaJadual(senarai) {
+      var tbody = document.getElementById('table-body');
+      tbody.innerHTML = "";
+      if (!senarai || senarai.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-muted">Tiada sebarang laporan dijumpai.</td></tr>';
+        return;
+      }
+      senarai.forEach(function(row) {
+        var tr = document.createElement('tr');
+        var tdAksi = "";
+        
+        if (userSession.role === "ADMIN" || userSession.email === row.emelDelima) {
+          tdAksi = `<button class="btn btn-sm btn-warning py-0 px-1 me-1 small" onclick="panggilEditForm(${row.rowNumber})"><i class="bi bi-pencil-square"></i></button>`;
+          if(userSession.role === "ADMIN") {
+             tdAksi += `<button class="btn btn-sm btn-danger py-0 px-1 small" onclick="padamRekodLaporan(${row.rowNumber})"><i class="bi bi-trash-fill"></i></button>`;
+          }
+        } else {
+          tdAksi = `<span class="badge bg-secondary small text-white">Tiada Capaian</span>`;
+        }
+
+        tr.innerHTML = `<td>${row.index}</td>
+          <td>${row.tarikhLapor}</td>
+          <td class="text-start">${row.namaGuru}</td>
+          <td>${row.namaSekolah}</td>
+          <td class="text-start small fw-bold text-primary">${row.namaBengkel}</td>
+          <td>${row.tarikhMula}</td>
+          <td>${row.tarikhTamat}</td>
+          <td class="fw-bold text-success">${row.purataSkor}</td>
+          <td><div class="d-flex justify-content-center">${tdAksi}</div></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function tapisJadualDariCache() {
+      var kriteria = document.getElementById('filter-bengkel').value;
+      if (!cacheDataDashboard) return;
+      if (kriteria === "SEMUA") {
+        binaJadual(cacheDataDashboard.senarai);
+      } else {
+        var senaraiDitapis = cacheDataDashboard.senarai.filter(function(row) {
+          return row.namaBengkel === kriteria;
+        });
+        binaJadual(senaraiDitapis);
+      }
+    }
+
+    function binaGraf(dataGraf) {
+      if(!dataGraf || dataGraf.length <= 1) {
+         document.getElementById('chart-bengkel').innerHTML = "<div class='text-muted text-center pt-5'>Data graf tidak mencukupi untuk dipaparkan.</div>";
+         return;
+      }
+      var data = google.visualization.arrayToDataTable(dataGraf);
+      var options = {
+        hAxis: { title: 'Purata Skor Kepuasan', minValue: 1, maxValue: 5, textStyle: {fontSize: 11} },
+        vAxis: { title: 'Tajuk Kursus / Bengkel', textStyle: {fontSize: 10} },
+        bars: 'horizontal',
+        legend: { position: 'none' },
+        colors: ['#0d6efd'],
+        chartArea: {width: '55%', height: '80%'}
+      };
+      var chart = new google.visualization.BarChart(document.getElementById('chart-bengkel'));
+      chart.draw(data, options);
+    }
+
+    function panggilEditForm(rowNum) {
+      if(!cacheDataDashboard) return;
+      var dataObj = cacheDataDashboard.senarai.find(r => r.rowNumber === rowNum);
+      if(!dataObj) return;
+
+      document.getElementById('form-rowNumber').value = dataObj.rowNumber;
+      document.getElementsByName('namaGuru')[0].value = dataObj.namaGuru;
+      document.getElementsByName('namaSekolah')[0].value = dataObj.namaSekolah;
+      document.getElementsByName('namaBengkel')[0].value = dataObj.namaBengkel;
+      document.getElementsByName('tarikhMula')[0].value = dataObj.tarikhMulaRaw || "";
+      document.getElementsByName('tarikhTamat')[0].value = dataObj.tarikhTamatRaw || "";
+      document.getElementsByName('s1')[0].value = dataObj.s1;
+      document.getElementsByName('s2')[0].value = dataObj.s2;
+      document.getElementsByName('s3')[0].value = dataObj.s3;
+      document.getElementsByName('s4')[0].value = dataObj.s4;
+      document.getElementsByName('s5')[0].value = dataObj.s5;
+      document.getElementsByName('bentukPelaksanaan')[0].value = dataObj.bentukPelaksanaan || "";
+      document.getElementsByName('tarikhPelaksanaan')[0].value = dataObj.tarikhPelaksanaanRaw || "";
+
+      document.getElementById('btn-submit-borang').innerHTML = '<i class="bi bi-pencil-square"></i> Kemas Kini Laporan';
+      tukarHalaman('page-borang');
+    }
+
+    function batalEditForm() {
+      document.getElementById('borangPelaporan').reset();
+      document.getElementById('form-rowNumber').value = "";
+      document.getElementById('btn-submit-borang').innerHTML = '<i class="bi bi-cloud-arrow-up-fill"></i> Simpan Laporan';
+    }
+
+    function padamRekodLaporan(rowNum) {
+      if(confirm("Adakah anda pasti mahu memadam rekod laporan ini secara kekal dari Google Sheets?")) {
+        document.getElementById('loading').style.display = 'flex';
+        document.getElementById('loadingText').innerText = "Sedang memadam rekod...";
+        
+        fetch(`${WEB_APP_URL}?action=padam&rowNumber=${rowNum}`)
+          .then(res => res.json())
+          .then(res => {
+            document.getElementById('loading').style.display = 'none';
+            alert(res.msg);
+            muatDataDashboard();
+          });
+      }
+    }
+
+    function tukarHalaman(sectionId) {
+      document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active-section'));
+      document.getElementById(sectionId).classList.add('active-section');
+      
+      document.querySelectorAll('.nav-custom-btn').forEach(btn => {
+         btn.classList.remove('btn-primary');
+         btn.classList.add('btn-outline-primary');
+      });
+      
+      if(sectionId === 'page-utama') document.getElementById('btn-utama').className = 'btn btn-primary nav-custom-btn';
+      if(sectionId === 'page-borang') document.getElementById('btn-borang').className = 'btn btn-primary nav-custom-btn';
+      if(sectionId === 'page-senarai') document.getElementById('btn-senarai').className = 'btn btn-primary nav-custom-btn';
+    }
+
+    function prosesKeluarSistem() {
+      if(confirm("Adakah anda pasti mahu log keluar?")) {
+        userSession = { email: "", role: "" };
+        document.getElementById('formLoginSistem').reset();
+        batalEditForm();
+        document.getElementById('dashboard-content').style.display = 'none';
+        document.getElementById('login-page').style.display = 'flex';
+      }
+    }
+  </script>
+</body>
+</html>
